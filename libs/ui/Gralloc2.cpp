@@ -60,6 +60,7 @@ Error Mapper::createDescriptor(
                 *outDescriptor = tmpDescriptor;
             });
 
+    ALOGE_IF(!ret.isOk() || error != Error::NONE, "V521DBG Mapper::createDescriptor: ok=%d desc=%s error=%d usage=0x%llx", ret.isOk(), ret.isOk() ? "" : ret.description().c_str(), static_cast<int>(error), static_cast<unsigned long long>(descriptorInfo.usage));
     return (ret.isOk()) ? error : kTransactionError;
 }
 
@@ -228,6 +229,7 @@ Error Allocator::allocate(BufferDescriptor descriptor, uint32_t count,
                 const auto& tmpBuffers) {
                 error = tmpError;
                 if (tmpError != Error::NONE) {
+                    ALOGE("V521DBG Allocator::allocate: IAllocator returned %d", static_cast<int>(tmpError));
                     return;
                 }
 
@@ -236,6 +238,7 @@ Error Allocator::allocate(BufferDescriptor descriptor, uint32_t count,
                     error = mMapper.importBuffer(tmpBuffers[i],
                             &outBufferHandles[i]);
                     if (error != Error::NONE) {
+                        ALOGE("V521DBG Allocator::allocate: importBuffer[%u] failed %d", i, static_cast<int>(error));
                         for (uint32_t j = 0; j < i; j++) {
                             mMapper.freeBuffer(outBufferHandles[j]);
                             outBufferHandles[j] = nullptr;
@@ -250,6 +253,7 @@ Error Allocator::allocate(BufferDescriptor descriptor, uint32_t count,
     // make sure the kernel driver sees BC_FREE_BUFFER and closes the fds now
     hardware::IPCThreadState::self()->flushCommands();
 
+    ALOGE_IF(!ret.isOk(), "V521DBG Allocator::allocate: transport failed: %s", ret.description().c_str());
     return (ret.isOk()) ? error : kTransactionError;
 }
 
